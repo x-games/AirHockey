@@ -45,8 +45,8 @@ AirGame.prototype.init_game = function() {
     var self = this;
 
     //start positions of ball and bat
-    this.initBallPosX = this.w/2;
-    this.initBallPosY = this.h/2;
+    this.ballPosX = this.w/2;
+    this.ballPosY = this.h/2;
     this.initBatPosX = 150;
     this.initBatPosY = 500;
 
@@ -69,8 +69,8 @@ AirGame.prototype.init_game = function() {
         self.ballSpeedX = self.ballSpeedX * self.slowDown;
         self.ballSpeedY = self.ballSpeedY * self.slowDown;
 
-        self.initBallPosX += self.ballSpeedX;
-        self.initBallPosY += self.ballSpeedY;
+        self.ballPosX += self.ballSpeedX;
+        self.ballPosY += self.ballSpeedY;
 
         self.collision();
         self.checkGoal();
@@ -107,22 +107,22 @@ AirGame.prototype.collision = function() {
     this.ballYmin = this.ymin + this.ballRadius /2;
 
     //collision with borders
-    if((this.initBallPosX >= this.ballXmax || this.initBallPosX <= this.ballXmin)) {
+    if((this.ballPosX >= this.ballXmax || this.ballPosX <= this.ballXmin)) {
         this.ballSpeedX *= -1;
     }
-    if((this.initBallPosY >= this.ballYmax || this.initBallPosY <= this.ballYmin)) {
+    if((this.ballPosY >= this.ballYmax || this.ballPosY <= this.ballYmin)) {
         this.ballSpeedY *= -1;
     }
 };
 
 AirGame.prototype.checkBatStrike = function(batX, batY, batR) {
     var dbt = (batR+this.ballRadius);
-    var distance = this.dist(batX, batY, this.initBallPosX, this.initBallPosY);
+    var distance = this.dist(batX, batY, this.ballPosX, this.ballPosY);
 
     if (distance < dbt) {
         //speed of the ball equal the distance between bat and ball, divided by dbt, and multiply by ball speed
-        this.ballSpeedX = (this.initBallPosX-batX) / dbt * this.ballSpeed;
-        this.ballSpeedY = (this.initBallPosY-batY) / dbt * this.ballSpeed;
+        this.ballSpeedX = (this.ballPosX-batX) / dbt * this.ballSpeed;
+        this.ballSpeedY = (this.ballPosY-batY) / dbt * this.ballSpeed;
     }
 };
 
@@ -130,8 +130,8 @@ AirGame.prototype.AI = function() {
     this.xAISpeed = 2;
     //CPU AI! if the ball on its side, it try to match Y coordinate with ball.
     //And return to init position when ball is out
-    if (this.initBallPosY <= this.h/2) {
-        if (this.initBallPosY - this.ballRadius > this.initAIBatPosY) {
+    if (this.ballPosY <= this.h/2) {
+        if (this.ballPosY - this.ballRadius > this.initAIBatPosY) {
             this.initAIBatPosY += this.yAISpeed;
         }
         else {
@@ -146,25 +146,25 @@ AirGame.prototype.AI = function() {
     }
 
     //If the ball behind AI, it moves out of ball's way
-    if (this.initBallPosY < this.initAIBatPosY && this.initBallPosX == this.initAIBatPosX) {
-        this.xAISpeed = 8;
+    if (this.ballPosY < this.initAIBatPosY && this.ballPosX > this.initAIBatPosX - 20 && this.ballPosX < this.initAIBatPosX + 20) {
+        this.xAISpeed = -8;
     }
 
     //Make CPU move towards the ball's x coord
-    if (this.initAIBatPosX < this.initBallPosX ) {
+    if (this.initAIBatPosX < this.ballPosX + 10) {
         this.initAIBatPosX += this.xAISpeed;
     }
-    if (this.initAIBatPosX > this.initBallPosX ) {
+    if (this.initAIBatPosX > this.ballPosX - 10) {
         this.initAIBatPosX -= this.xAISpeed;
     }
 };
 
 AirGame.prototype.checkGoal = function() {
-    if (this.initBallPosY >= this.ymax - this.ballRadius && this.initBallPosX >= 180 && this.initBallPosX <= 270 ) {
+    if (this.ballPosY >= this.ymax - this.ballRadius && this.ballPosX >= 180 && this.ballPosX <= 270 ) {
         this.aiPoint++;
         this.isAnimationActive = false;
     }
-    if (this.initBallPosY <= this.ymin + this.ballRadius && this.initBallPosX >= 180 && this.initBallPosX <= 270 ) {
+    if (this.ballPosY <= this.ymin + this.ballRadius && this.ballPosX >= 180 && this.ballPosX <= 270 ) {
         this.yourPoint++;
         this.isAnimationActive = false;
     }
@@ -219,10 +219,11 @@ AirGame.prototype.draw = function() {
     this.ctx.fill();
 
     //game ball
-    this.ctx.beginPath();
-    this.ctx.arc(this.initBallPosX, this.initBallPosY, this.ballRadius, 0, 2 * Math.PI, false);
-    this.ctx.fillStyle = 'red';
-    this.ctx.fill();
+    //this.ctx.beginPath();
+    //this.ctx.arc(this.initBallPosX, this.initBallPosY, this.ballRadius, 0, 2 * Math.PI, false);
+    //this.ctx.fillStyle = 'red';
+    //this.ctx.fill();
+    this.ctx.drawImage(img, this.ballPosX - this.ballRadius, this.ballPosY - this.ballRadius);
 
     //goals
     this.ctx.beginPath();
@@ -253,6 +254,36 @@ AirGame.prototype.getMousePos = function(canvas, evt) {
     }
 };
 
+// todo prepare resources
+// todo wait for all resources (imageLoader)
+
+
 var airGame = new AirGame();
 
-airGame.init_game();
+//airGame.init_game();
+
+var radius = 20,
+    d = radius * 2,
+    imagesToLoad = 1,
+    imagesLoaded = 0;
+var canvas = document.getElementById('canvasSecond');
+var ctx = canvas.getContext('2d');
+canvas.width = d;
+canvas.height = d;
+
+ctx.beginPath();
+ctx.arc(radius, radius, radius, 0, 2 * Math.PI, false);
+ctx.fillStyle = 'red';
+ctx.fill();
+
+var img = new Image();
+img.addEventListener('load', function(){
+    console.log('image ready');
+    imagesLoaded ++;
+    if (imagesLoaded === imagesToLoad) {
+        airGame.init_game();
+
+    }
+});
+img.src = canvas.toDataURL();
+document.body.appendChild(img);
